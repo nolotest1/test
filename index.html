@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPLOADFALL - Retro File Hosting</title>
+    <!-- Tailwind CSS for layout utility -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Press Start 2P (Headers) and VT323 (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #050505;
+            --neon-pink: #ff00ff;
+            --neon-blue: #00ffff;
+            --neon-purple: #bc13fe;
+            --text-main: #e0e0e0;
+            --grid-color: rgba(0, 255, 255, 0.05);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'VT323', monospace;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* --- CRT Scanline Effect --- */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 100;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* --- Retro Grid Background --- */
+        .retro-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+            perspective: 500px;
+        }
+
+        /* --- Typography Classes --- */
+        .font-pixel-header {
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        .font-pixel-body {
+            font-family: 'VT323', monospace;
+        }
+
+        /* --- Neon Text Effects --- */
+        .neon-text-logo {
+            background: linear-gradient(to right, var(--neon-pink), var(--neon-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(188, 19, 254, 0.5);
+            animation: flicker 3s infinite alternate;
+        }
+
+        /* --- Component Styles --- */
+        .pixel-btn {
+            background: linear-gradient(90deg, #bc13fe, #ff00ff);
+            color: white;
+            border: 2px solid white;
+            box-shadow: 4px 4px 0px 0px #000000, 4px 4px 0px 2px #bc13fe;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .pixel-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px 0px #000000, 2px 2px 0px 2px #bc13fe;
+            text-shadow: 0 0 8px white;
+        }
+
+        .upload-container {
+            border: 2px dashed var(--neon-blue);
+            background: rgba(0, 255, 255, 0.02);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), inset 0 0 20px rgba(0, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-container:hover, .upload-container.drag-active {
+            border-color: var(--neon-pink);
+            background: rgba(255, 0, 255, 0.05);
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.4), inset 0 0 20px rgba(255, 0, 255, 0.1);
+            cursor: pointer;
+        }
+
+        .upload-container::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to bottom right, rgba(255,255,255,0) 40%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 60%);
+            transform: rotate(45deg);
+            animation: sheen 6s infinite;
+            pointer-events: none;
+        }
+
+        .support-box {
+            border: 2px solid var(--neon-purple);
+            box-shadow: 0 0 10px var(--neon-purple), inset 0 0 10px rgba(188, 19, 254, 0.2);
+            background: #000;
+        }
+
+        /* --- Animations --- */
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                opacity: 1;
+                filter: brightness(1);
+            }
+            20%, 24%, 55% {
+                opacity: 0.8;
+                filter: brightness(1.2);
+            }
+        }
+
+        @keyframes sheen {
+            0% { transform: translate(-50%, -50%) rotate(45deg); }
+            100% { transform: translate(50%, 50%) rotate(45deg); }
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); }
+            50% { box-shadow: 0 0 25px rgba(0, 255, 255, 0.5); }
+            100% { box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); }
+        }
+
+        /* --- Utilities --- */
+        .text-neon-blue { color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
+        .text-neon-pink { color: var(--neon-pink); text-shadow: 0 0 5px var(--neon-pink); }
+        
+        .crypto-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-bottom: 1px dashed #333;
+        }
+        .crypto-item:last-child { border-bottom: none; }
+        
+        /* Pixel Star Decoration */
+        .pixel-star {
+            width: 4px;
+            height: 4px;
+            background-color: white;
+            box-shadow: 
+                4px 0 white, -4px 0 white, 0 -4px white, 0 4px white,
+                8px 0 white, -8px 0 white, 0 -8px white, 0 8px white,
+                0 0 10px 2px gold;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            animation: flicker 2s infinite;
+        }
+
+        /* Input hidden */
+        #fileInput { display: none; }
+    </style>
+</head>
+<body class="selection:bg-fuchsia-700 selection:text-white">
+
+    <!-- Retro Background Grid -->
+    <div class="retro-grid"></div>
+
+    <!-- Header -->
+    <header class="w-full max-w-5xl mx-auto p-6 flex flex-col md:flex-row justify-between items-center z-10 gap-4">
+        <div class="logo">
+            <h1 class="font-pixel-header text-2xl md:text-3xl neon-text-logo tracking-widest">
+                <i class="fa-solid fa-cloud-arrow-up mr-2"></i>UPLOADFALL
+            </h1>
+        </div>
+        <a href="#" class="pixel-btn font-pixel-header text-xs py-3 px-6 no-underline inline-block">
+            <i class="fa-brands fa-telegram mr-2"></i>Telegram Channel
+        </a>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4 w-full max-w-4xl mx-auto z-10">
+        
+        <!-- Upload Section -->
+        <div class="w-full text-center mb-12">
+            <p class="font-pixel-body text-xl md:text-2xl text-gray-400 mb-2 tracking-wider">
+                MAX FILE SIZE: <span class="text-neon-blue">~100GB</span>
+            </p>
+
+            <!-- Interactive Dropzone -->
+            <div id="dropzone" class="upload-container w-full h-64 md:h-80 flex flex-col items-center justify-center p-8 mt-4 mb-6 select-none">
+                <i class="fa-solid fa-cloud-bolt text-6xl mb-6 text-neon-blue drop-shadow-glow"></i>
+                <h2 class="font-pixel-header text-lg md:text-xl text-white mb-4 leading-relaxed">
+                    DRAG & DROP OR <br><span class="text-neon-pink">CLICK TO UPLOAD</span>
+                </h2>
+                <div id="file-info" class="hidden mt-2 font-pixel-body text-2xl text-green-400 border border-green-500 px-2 py-1 bg-black">
+                    <!-- Filename will appear here -->
+                </div>
+            </div>
+            
+            <p class="font-pixel-body text-xl text-gray-500 max-w-2xl mx-auto">
+                Upload large files and get a direct download link instantly. Fast, secure, and simple. No logs.
+            </p>
+        </div>
+
+    </main>
+
+    <!-- Footer / Support -->
+    <footer class="w-full max-w-5xl mx-auto p-6 mb-8 z-10">
+        <div class="support-box p-6 relative">
+            <h3 class="font-pixel-header text-sm text-neon-pink mb-4 border-b-2 border-dashed border-gray-800 pb-2">
+                <i class="fa-solid fa-heart mr-2"></i>SUPPORT US
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-pixel-body text-lg">
+                <div class="crypto-item">
+                    <i class="fa-brands fa-bitcoin text-yellow-500 text-xl"></i>
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="text-gray-400 text-sm">Bitcoin (BTC)</span>
+                        <span class="text-xs md:text-sm text-white truncate">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</span>
+                    </div>
+                </div>
+                <div class="crypto-item">
+                    <i class="fa-brands fa-ethereum text-blue-400 text-xl"></i>
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="text-gray-400 text-sm">Tether (USDT - ERC20)</span>
+                        <span class="text-xs md:text-sm text-white truncate">0x71C7656EC7ab88b098defB751B7401B5f6d8976F</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pixel Decoration Star -->
+            <div class="pixel-star"></div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <p class="font-pixel-body text-gray-600">© 2024 UPLOADFALL // SYSTEM.READY</p>
+        </div>
+    </footer>
+
+    <!-- Hidden Input -->
+    <input type="file" id="fileInput" multiple>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('file-info');
+            const originalContent = dropzone.innerHTML;
+
+            // Trigger file input on click
+            dropzone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // Drag Enter / Over
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.add('drag-active');
+                }, false);
+            });
+
+            // Drag Leave / Drop
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.remove('drag-active');
+                }, false);
+            });
+
+            // Handle Drop
+            dropzone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                handleFiles(files);
+            });
+
+            // Handle Input Change
+            fileInput.addEventListener('change', (e) => {
+                const files = e.target.files;
+                handleFiles(files);
+            });
+
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    const count = files.length;
+                    const name = files[0].name;
+                    
+                    // Simple simulated upload UI state
+                    const display = count > 1 ? `${count} FILES SELECTED` : `SELECTED: ${name}`;
+                    
+                    // Change UI to show selection
+                    fileInfo.textContent = display;
+                    fileInfo.classList.remove('hidden');
+                    
+                    // Add a glimmer effect to show success
+                    dropzone.style.borderColor = '#00ff00';
+                    dropzone.style.boxShadow = '0 0 30px rgba(0, 255, 0, 0.3)';
+                    
+                    // Reset after 3 seconds for demo purposes
+                    setTimeout(() => {
+                        dropzone.style.borderColor = ''; // Reverts to CSS
+                        dropzone.style.boxShadow = '';
+                    }, 3000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

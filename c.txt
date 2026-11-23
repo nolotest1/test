@@ -1,0 +1,146 @@
+
+# CORE DIRECTIVE: Production-Grade Terminal AI Agent System (Nexus)
+I want a complete revision of the project.
+TypeScrip
+ React - Ink 
+ Node.js.
+ 
+**Project Root:** `/storage/emulated/0/ai/`
+**Architecture:** `nexus-ui/` (TypeScript/React/Ink/Node.js primary) + `agents/` (Lightweight Python executors/sandbox only)
+**Mission:** Deliver a complete, cross-platform, terminal-native AI agent framework that implements industry-proven patterns from MCP, OpenClaw, Claude Code, and modern terminal agents. Zero placeholders. Production-ready.
+
+---
+
+## 📚 ARCHITECTURAL FOUNDATIONS (Research-Backed Patterns)
+
+Integrate these proven paradigms into the core design:
+- **MCP Protocol:** JSON-RPC tool discovery (`tools/list`, `tools/call`), process isolation, host/server separation. Use as reference for skill/tool routing and capability negotiation.
+- **OpenClaw:** Declarative skill manifests, runtime tool binding, on-demand prompt injection, local-first extensibility. Adopt folder-based skill structure and adapter-driven loading.
+- **Claude Code / Aider:** Strict permission gates, diff-based file editing, bash sandboxing, context window optimization, supervisor-worker topology, human-in-the-loop approval flows.
+- **LangChain/LangGraph:** State routing, checkpointing, tool abstraction (`BaseTool` pattern), async execution graphs. Use for task orchestration and multi-agent coordination.
+- **Terminal Agent UX (Warp, Ghostty, iTerm2):** Virtualized rendering, keyboard-first navigation, responsive grid layout, mock/offline degradation, real-time stream multiplexing.
+
+---
+
+## 🧱 1. CORE STACK & RUNTIME RULES
+
+| Layer | Technology | Constraints |
+|-------|------------|-------------|
+| **Primary Language** | TypeScript 5.4+ | `strict: true`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, zero `any`, async-first, ESM |
+| **Terminal UI** | React 18+ + Ink 4.5+ | DOM-free, keyboard-driven, `process.stdout.columns/rows` responsive, virtualized lists, focus trapping |
+| **Runtime** | Node.js 20+ LTS | `tsx`/`esbuild`, `undici`/`httpx` async HTTP, native `child_process` |
+| **Python Layer** | Python 3.11+ | Lightweight ONLY: subprocess sandbox, AST validation, skill executors, daemon management. No heavy frameworks. |
+| **Cross-Platform** | Termux, Linux, macOS, WSL | `node:path`/`pathlib` exclusively, no hardcoded binaries, Termux `$PREFIX` aware, POSIX syscall fallbacks |
+
+---
+
+## 🌐 2. UNIVERSAL LLM ROUTER & CONTEXT ENGINE
+
+### Auto-Discovery & Routing
+- **Discovery Probe:** `GET {base_url}/v1/models` (OpenAI-compatible fallback covers 90% of cloud/local APIs). Fallback paths: `/api/tags` (Ollama), `/v1beta/models` (Gemini), `/v1/models` (Anthropic).
+- **Config Schema (`config/llm_endpoints.yaml`):** Hot-reloadable, unlimited endpoints. Fields: `id`, `base_url`, `api_key` (env-injected), `auto_discover: true`, `refresh_interval_min`, `fallback_chain: []`.
+- **Router Interface:** `LLMRouter.chat(messages, system, options) → AsyncGenerator<Chunk> | FullResponse`. Normalizes requests/responses via adapter registry. Handles 429/503 with exponential backoff.
+- **Mid-Chat Switch:** Preserves conversation history, memory state, and tool bindings. Adapts system prompt if capability mismatch occurs. UI indicator: `🔄 Switched to Provider/Model (Ctx: X/Y)`.
+
+### Context Manager
+- Sliding window with priority preservation: `system_prompt > recent_turns > critical_tool_calls > long_context`.
+- Auto-summarization fallback when approaching model limit.
+- Per-model token estimation (tiktoken-compatible + provider overrides).
+- Real-time usage meter: warns at 75%/90%, auto-truncates or blocks at 100% (configurable).
+
+---
+
+## 🛠️ 3. DYNAMIC MULTI-FORMAT SKILL ENGINE
+
+### Folder-Based Structure
+```
+agents/skills/{skill_name}/
+├── SKILL.md | skill.yaml | main.py  (native format)
+├── skill.py (optional helper)
+└── requirements.txt (optional)
+```
+
+### Native Multi-Format Loading (Zero Wrappers)
+- **Runtime Detection:** Scans skill folder → identifies format → delegates to adapter registry.
+- **Supported Formats & Adapters:**
+  - `NEXUS_NATIVE`: `SKILL.md` + YAML frontmatter
+  - `OPENCLAW`: `skill.yaml` + instruction blocks
+  - `LANGCHAIN`: `BaseTool` subclass in `.py`
+  - `MCP`: `mcp.json` or JSON-RPC endpoint
+  - `RAW_PYTHON`: `main.py` with `def run(context)`
+- **On-Demand Injection:** Load prompt/code ONLY when agent selects it. LRU cache (max 10). Never preload all skills.
+
+### Hybrid Execution Model
+- **Sync Mode (Default):** Secure subprocess sandbox. Limits: CPU 50%, RAM 512MB, Timeout 30s. Structured stdout/stderr capture.
+- **Daemon Mode (Long-Running):** Metadata flag `execution_mode: daemon`. Spawns background process → immediately returns `{task_id, pid, status: "running"}`. Enables real-time WebSocket log streaming (`/ws/skills/{id}/logs`), kill signal, auto-cleanup.
+- **Approval Policy:** Tied to `risk_level` + `auto_approve` in manifest. Integrates with 3-mode UI toggle: 🚀 `FULL_AUTO` | ⚡ `SMART_APPROVAL` | 🛡️ `MANUAL_STEP`.
+
+---
+
+## 🤖 4. MULTI-AGENT CORE & EVOLUTION
+
+- **Topology:** Supervisor → Specialists → Tools/Skills. Priority-based task queue with dependency resolution.
+- **Memory:** Short-term (sliding window) + Long-term (vector store with TTL, semantic deduplication, cross-agent sync).
+- **Self-Evolution Pipeline:** `Gap Detection → Proposal → AST/Static Analysis → Sandbox Test → Policy Approval → Dynamic Register → Audit Log`. Never uses `eval/exec`. Runs via `importlib` + subprocess isolation. Full versioning & rollback.
+- **Observability:** Structured JSON logging, OpenTelemetry tracing, audit trails in `.nexus/evolution_audit/`.
+
+---
+
+## 🖥️ 5. TERMINAL UI (React + Ink)
+
+### Layout & UX
+- **Regions:** Top status bar (mode, connection, active model), Main workspace (agent tree, task queue, virtualized logs), Right pane (context/details/skill review), Bottom command panel.
+- **Interactive Elements:** Command palette (`/` trigger), fuzzy search, keyboard shortcuts (`useInput`), focus trapping in modals, ESC dismissal.
+- **Visuals:** Dark theme with neon gradients, animated ASCII logo, pulsing status indicators, rounded borders (`┌─┐│└┘`), syntax-highlighted approval modals.
+- **Daemon Controls:** Real-time log stream panel, PID/uptime display, ⏸️/🛑 controls, kill confirmation, copy task ID.
+
+### State & Bridge
+- **State:** Zustand + `persist` + `immer`. Optimistic updates with rollback.
+- **Bridge:** WebSocket (real-time streams) + REST (sync ops). Strict Zod/Pydantic contracts. Mock adapter for offline dev.
+- **Offline/Degraded:** Queue commands locally, sync on reconnect, fallback to mock LLM/skills if backend unreachable.
+
+---
+
+## 🌍 6. CROSS-PLATFORM & RUNTIME GUARANTEES
+
+- **Path Handling:** `node:path` / `pathlib` exclusively. Dynamic resolution of `$HOME`, `$PREFIX`, temp dirs.
+- **Termux Awareness:** Detect `process.env.TERMUX_VERSION`. Use `$PREFIX/bin/python3`. Avoid `systemd`/`prctl`. Fallback to JS-side timers or `timeout` for resource limits.
+- **Process Management:** `child_process` / `subprocess` with `stdio: pipe`, `detached: true` for daemons, `process.kill()` with signal cleanup.
+- **TLS/Network:** `undici`/`httpx` with system cert fallback. Support proxy/env vars. HTTPS-only for webhooks & external skill imports.
+- **Performance:** UI render budget <16ms/frame. Skill listing <100ms. LLM discovery <200ms. Memory footprint <300MB idle.
+
+---
+
+## ⚙️ 7. IMPLEMENTATION CONSTRAINTS (Non-Negotiable)
+
+✅ **Zero Hardcoding:** All providers, models, skills, and endpoints loaded via config or auto-discovery.  
+✅ **Type Safety:** Full Pydantic (Python) + Zod (TS) validation. Zero `any`/`unknown` without narrowing.  
+✅ **Security First:** Sandboxed execution, AST validation, rate limiting, circuit breakers, masked secrets in logs.  
+✅ **Context Efficiency:** Load max 1 skill prompt at a time. Never preload all skills/models.  
+✅ **No Placeholders:** Complete, runnable code. No `// TODO`, no stubs, no pseudocode.  
+✅ **Async-First:** Non-blocking I/O, streaming-native, retry/backoff built into all network calls.  
+✅ **Backward Compatible:** Existing configs/skills continue to work. New features opt-in via config.
+
+---
+
+## 📋 8. EXECUTION ORDER & DELIVERABLES
+
+1. **Scaffold & Config:** `package.json`, `tsconfig.json`, `esbuild` config, `config/llm_endpoints.yaml`, `.env.example`, hot-reload loader
+2. **LLM Router:** `core/llm/router.ts`, adapters (`openai_compatible`, `anthropic`, `gemini`, `ollama`, `custom`), context manager, auto-discovery probe
+3. **Skill Engine:** `core/skills/registry.ts`, multi-format adapters, hybrid executor (sync/daemon), approval middleware, CLI `nexus skill install <source>`
+4. **Agent Core:** Supervisor/specialist topology, task queue, memory (vector + short-term), evolution pipeline (AST/sandbox/register)
+5. **UI (Ink/React):** Layout, status bar, agent tree, log stream, command palette, model/endpoint selector, daemon controls, approval modals
+6. **Bridge & State:** WebSocket/REST client, Zod contracts, Zustand store, mock adapter, offline queue
+7. **Cross-Platform Layer:** OS detector, sandbox runner abstraction, Termux fallbacks, path utils
+8. **Tests & Docs:** Vitest + `ink-testing-library`, contract tests, E2E flows, `README.md`, `ARCHITECTURE.md`, `CROSS_PLATFORM.md`
+
+**Final Validation Checklist:**
+- [ ] `npm run dev` launches interactive terminal UI
+- [ ] `nexus skill install <git|folder>` auto-detects format & indexes without wrappers
+- [ ] LLM auto-discovery fetches live models, switches mid-chat without state loss
+- [ ] Daemon skills stream logs, accept kill, run in background
+- [ ] Approval modes enforce policy, UI reflects risk & execution mode
+- [ ] Runs identically on Termux, Linux, macOS, WSL
+- [ ] Zero hardcoded providers/skills, full type safety, <300MB memory idle
+
+**Execute now. Deliver complete, interoperable, production-ready code. No explanations. No fluff. Only artifacts, configs, and system-ready implementations.**
